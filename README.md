@@ -66,16 +66,18 @@ the same 108,000-character input for both libraries:
 
 | case | mojopypinyin | pypinyin 0.55.0 | speedup |
 | --- | ---: | ---: | ---: |
-| `lazy_pinyin`, NORMAL | 196.42 ms | 955.63 ms | 4.87x |
-| `lazy_pinyin`, TONE3 | 111.49 ms | 1064.13 ms | 9.54x |
-| `pinyin`, TONE | 151.70 ms | 652.28 ms | 4.30x |
+| `lazy_pinyin`, NORMAL | 100.87 ms | 915.65 ms | 9.08x |
+| `lazy_pinyin`, TONE3 | 110.06 ms | 1047.17 ms | 9.51x |
+| `pinyin`, TONE | 98.25 ms | 626.04 ms | 6.37x |
 
 These are best-of-five wall-clock measurements after loading the shared
 library. The benchmark first asserts that both implementations return exactly
 the same result. Run `pixi run bench` to reproduce it; the pixi task takes a
 machine-wide lock to avoid overlap with other benchmark jobs.
 
-No GPU path is provided.
+No GPU path is provided. The conversion kernel is a branch-heavy trie and
+dictionary lookup with low arithmetic intensity, so host/device transfers and
+launch overhead would dominate its few integer operations per table load.
 
 ## How it works
 
