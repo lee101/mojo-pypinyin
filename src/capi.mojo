@@ -7,13 +7,13 @@ def binary_lookup(keys: I32Ptr, values: I32Ptr, count: Int, key: Int) -> Int:
     var high = count
     while low < high:
         var middle = (low + high) // 2
-        var candidate = Int(keys.load(middle))
+        var candidate = Int(keys.unsafe_load(middle))
         if candidate < key:
             low = middle + 1
         else:
             high = middle
-    if low < count and Int(keys.load(low)) == key:
-        return Int(values.load(low))
+    if low < count and Int(keys.unsafe_load(low)) == key:
+        return Int(values.unsafe_load(low))
     return -1
 
 
@@ -25,18 +25,18 @@ def trie_child(
     edge_codes: I32Ptr,
     edge_next: I32Ptr,
 ) -> Int:
-    var first = Int(node_first.load(node))
+    var first = Int(node_first.unsafe_load(node))
     var low = first
-    var high = first + Int(node_count.load(node))
+    var high = first + Int(node_count.unsafe_load(node))
     while low < high:
         var middle = (low + high) // 2
-        var candidate = Int(edge_codes.load(middle))
+        var candidate = Int(edge_codes.unsafe_load(middle))
         if candidate < codepoint:
             low = middle + 1
         else:
             high = middle
-    if low < first + Int(node_count.load(node)) and Int(edge_codes.load(low)) == codepoint:
-        return Int(edge_next.load(low))
+    if low < first + Int(node_count.unsafe_load(node)) and Int(edge_codes.unsafe_load(low)) == codepoint:
+        return Int(edge_next.unsafe_load(low))
     return -1
 
 
@@ -82,7 +82,7 @@ def mpy_convert(
         while cursor < n:
             var child = trie_child(
                 node,
-                Int(codepoints.load(cursor)),
+                Int(codepoints.unsafe_load(cursor)),
                 node_first,
                 node_count,
                 edge_codes,
@@ -92,27 +92,27 @@ def mpy_convert(
                 break
             node = child
             cursor += 1
-            var candidate = Int(node_terminal.load(node))
+            var candidate = Int(node_terminal.unsafe_load(node))
             if candidate >= 0:
                 terminal = candidate
 
         if terminal >= 0:
-            var start = Int(phrase_offsets.load(terminal))
-            var stop = Int(phrase_offsets.load(terminal + 1))
+            var start = Int(phrase_offsets.unsafe_load(terminal))
+            var stop = Int(phrase_offsets.unsafe_load(terminal + 1))
             var length = stop - start
             spans.store(i, Int32(length))
             var k = 0
             while k < length:
-                result.store(i + k, phrase_entries.load(start + k))
+                result.store(i + k, phrase_entries.unsafe_load(start + k))
                 if k > 0:
                     spans.store(i + k, Int32(0))
                 k += 1
             i += length
         else:
-            var codepoint = Int(codepoints.load(i))
+            var codepoint = Int(codepoints.unsafe_load(i))
             var entry = -1
             if codepoint >= dense_start and codepoint < dense_start + dense_count:
-                entry = Int(dense.load(codepoint - dense_start))
+                entry = Int(dense.unsafe_load(codepoint - dense_start))
             else:
                 entry = binary_lookup(
                     extra_codes, extra_entries, extra_count, codepoint
